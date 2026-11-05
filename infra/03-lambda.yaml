@@ -1,0 +1,169 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  SP-API adapter Lambda (AgentCore Gateway target backend) for one persona.
+  Bundled code (dist/handler.mjs) is uploaded to S3 by deploy.sh.
+
+Parameters:
+  Prefix:
+    Type: String
+    Default: quick-spapi
+  Persona:
+    Type: String
+    AllowedValues: [seller, vendor]
+  SecretArn:
+    Type: String
+    Description: ARN of the SP-API credentials secret (from 01-secrets.yaml).
+  CodeS3Bucket:
+    Type: String
+  CodeS3Key:
+    Type: String
+  SpApiRegion:
+    Type: String
+    Default: NA
+    AllowedValues: [NA, EU, FE]
+  SpApiSandbox:
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
+    Description: Route calls to the SP-API sandbox endpoint instead of production.
+  SellerId:
+    Type: String
+    Default: ""
+    Description: Seller/merchant token used as {sellerId} by the Listings tools, reads and writes (seller persona only).
+  EnableWriteTools:
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
+    Description: Opt-in — allow tools that change account data (repricing, listings, PO acknowledgements, shipments, invoices). Default is read-only.
+  LogRetentionDays:
+    Type: Number
+    Default: 30
+    AllowedValues: [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365]
+    Description: How long the adapter's CloudWatch logs are kept.
+  ReservedConcurrency:
+    Type: String
+    Default: ""
+    Description: >
+      Optional cap on concurrent adapter executions (e.g. "5"). Leave empty to use the
+      account's unreserved pool — reserving capacity fails on accounts whose total
+      concurrency limit is 10, which is common for new accounts.
+
+Conditions:
+  HasReservedConcurrency: !Not [!Equals [!Ref ReservedConcurrency, ""]]
+
+Resources:
+  # Customer managed policies (not inline), each scoped to a single resource.
+  ReadSecretPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Read the SP-API credentials secret for this persona.
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: secretsmanager:GetSecretValue
+            Resource: !Ref SecretArn
+
+  WriteLogsPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Write the adapter's logs to its own log group only.
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: !GetAtt LogGroup.Arn
+
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: lambda.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Ref ReadSecretPolicy
+        - !Ref WriteLogsPolicy
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Metadata:
+      checkov:
+        skip:
+          - id: CKV_AWS_158
+            comment: The adapter logs no request arguments, responses, tokens or credentials; the default CloudWatch Logs encryption is sufficient.
+      cfn_nag:
+        rules_to_suppress:
+          - id: W84
+            reason: The adapter logs no request arguments, responses, tokens or credentials; the default CloudWatch Logs encryption is sufficient.
+      guard:
+        SuppressedRules:
+          - CW_LOGGROUP_RETENTION_PERIOD_CHECK
+      # CW_LOGGROUP_RETENTION_PERIOD_CHECK: RetentionInDays is set, from the LogRetentionDays
+      # parameter whose AllowedValues are exactly the valid retention periods; the rule cannot
+      # resolve a parameter reference.
+    Properties:
+      RetentionInDays: !Ref LogRetentionDays
+
+  Function:
+    Type: AWS::Lambda::Function
+    Metadata:
+      checkov:
+        skip:
+          - id: CKV_AWS_117
+            comment: The function only calls Amazon public HTTPS endpoints (Login with Amazon, SP-API). A VPC would add NAT cost without reducing exposure.
+          - id: CKV_AWS_116
+            comment: Invoked synchronously by AgentCore Gateway; a dead-letter queue applies only to asynchronous invocations.
+          - id: CKV_AWS_173
+            comment: Environment variables hold no secrets (persona, region, flags, the secret's ARN). Credentials are read from Secrets Manager at runtime.
+          - id: CKV_AWS_115
+            comment: Reserved concurrency is exposed as the optional ReservedConcurrency parameter; it is not set by default because it fails on accounts with a total limit of 10.
+      cfn_nag:
+        rules_to_suppress:
+          - id: W89
+            reason: The function only calls Amazon public HTTPS endpoints; a VPC would add NAT cost without reducing exposure.
+          - id: W92
+            reason: Reserved concurrency is available through the optional ReservedConcurrency parameter; not set by default because it fails on accounts with a total limit of 10.
+          - id: W58
+            reason: Log permissions come from the WriteLogsPolicy customer managed policy attached to LambdaRole (CreateLogStream/PutLogEvents on this function's log group); cfn_nag only recognises inline or AWS managed log policies.
+      guard:
+        SuppressedRules:
+          - LAMBDA_DLQ_CHECK
+      # LAMBDA_DLQ_CHECK: invoked synchronously by AgentCore Gateway; a dead-letter queue applies
+      # only to asynchronous invocations.
+    Properties:
+      FunctionName: !Sub "${Prefix}-${Persona}-spapi-adapter"
+      Runtime: nodejs22.x
+      Handler: handler.handler
+      Role: !GetAtt LambdaRole.Arn
+      MemorySize: 256
+      # Longer timeout so the Data Kiosk runner (get_sales_and_traffic) can create + poll a query.
+      Timeout: 120
+      ReservedConcurrentExecutions: !If [HasReservedConcurrency, !Ref ReservedConcurrency, !Ref AWS::NoValue]
+      LoggingConfig:
+        LogGroup: !Ref LogGroup
+      Code:
+        S3Bucket: !Ref CodeS3Bucket
+        S3Key: !Ref CodeS3Key
+      Environment:
+        Variables:
+          PERSONA: !Ref Persona
+          SP_API_REGION: !Ref SpApiRegion
+          SP_API_SANDBOX: !Ref SpApiSandbox
+          ENABLE_WRITE_TOOLS: !Ref EnableWriteTools
+          SP_API_SECRET_NAME: !Ref SecretArn
+          SELLER_ID: !Ref SellerId
+
+Outputs:
+  FunctionArn:
+    Value: !GetAtt Function.Arn
+  FunctionName:
+    Value: !Ref Function

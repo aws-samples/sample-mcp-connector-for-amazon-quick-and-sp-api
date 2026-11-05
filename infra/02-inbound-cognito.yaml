@@ -1,0 +1,70 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Cognito OIDC provider used as the AgentCore Gateway inbound authorizer (CUSTOM_JWT).
+  Amazon Quick's MCP connector obtains a machine-to-machine (client_credentials) JWT
+  from this pool and presents it to the Gateway.
+
+Parameters:
+  Prefix:
+    Type: String
+    Default: quick-spapi
+  Persona:
+    Type: String
+    AllowedValues: [seller, vendor]
+
+Resources:
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub "${Prefix}-${Persona}-pool"
+
+  # Resource server defines the custom scope the M2M client requests: "<prefix>-<persona>/invoke".
+  ResourceServer:
+    Type: AWS::Cognito::UserPoolResourceServer
+    Properties:
+      UserPoolId: !Ref UserPool
+      Identifier: !Sub "${Prefix}-${Persona}"
+      Name: !Sub "${Prefix}-${Persona} SP-API tools"
+      Scopes:
+        - ScopeName: invoke
+          ScopeDescription: Invoke the SP-API gateway tools
+
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Sub "${Prefix}-${Persona}-${AWS::AccountId}"
+      UserPoolId: !Ref UserPool
+
+  # Machine-to-machine app client for Amazon Quick (client_credentials grant, has a secret).
+  AppClient:
+    Type: AWS::Cognito::UserPoolClient
+    DependsOn: ResourceServer
+    Properties:
+      UserPoolId: !Ref UserPool
+      ClientName: !Sub "${Prefix}-${Persona}-quick"
+      GenerateSecret: true
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows: [client_credentials]
+      AllowedOAuthScopes:
+        - !Sub "${Prefix}-${Persona}/invoke"
+      SupportedIdentityProviders: [COGNITO]
+
+Outputs:
+  # This exact format satisfies the Gateway CustomJWTAuthorizer DiscoveryUrl pattern.
+  DiscoveryUrl:
+    Description: OIDC discovery URL for the Gateway inbound authorizer.
+    Value: !Sub "https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}/.well-known/openid-configuration"
+  TokenEndpoint:
+    Description: OAuth2 token endpoint Quick uses to mint a JWT.
+    Value: !Sub "https://${Prefix}-${Persona}-${AWS::AccountId}.auth.${AWS::Region}.amazoncognito.com/oauth2/token"
+  ClientId:
+    Description: App client id (goes in Quick's MCP connector; also the Gateway AllowedClients entry).
+    Value: !Ref AppClient
+  AllowedScope:
+    Description: OAuth scope Quick requests.
+    Value: !Sub "${Prefix}-${Persona}/invoke"
+  UserPoolId:
+    Value: !Ref UserPool

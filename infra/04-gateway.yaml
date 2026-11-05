@@ -1,0 +1,81 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  AgentCore Gateway (MCP) with a Cognito CUSTOM_JWT inbound authorizer, plus the
+  gateway execution role that lets it invoke the SP-API adapter Lambda.
+  The GatewayTarget itself is created by deploy.sh via the AWS CLI so it can reuse
+  the standard JSON tool schema (tool-schemas/<persona>.tools.json) directly.
+
+Parameters:
+  Prefix:
+    Type: String
+    Default: quick-spapi
+  Persona:
+    Type: String
+    AllowedValues: [seller, vendor]
+  DiscoveryUrl:
+    Type: String
+    Description: Cognito OIDC discovery URL (from 02-inbound-cognito.yaml).
+  AllowedClientId:
+    Type: String
+    Description: Cognito app client id allowed to call the gateway.
+  LambdaArn:
+    Type: String
+    Description: ARN of the SP-API adapter Lambda (from 03-lambda.yaml).
+
+Resources:
+  GatewayRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: bedrock-agentcore.amazonaws.com }
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+              # Confused-deputy protection: only this persona's gateway may assume the role.
+              ArnLike:
+                aws:SourceArn: !Sub "arn:${AWS::Partition}:bedrock-agentcore:${AWS::Region}:${AWS::AccountId}:gateway/${Prefix}-${Persona}-*"
+      ManagedPolicyArns:
+        - !Ref InvokeAdapterPolicy
+
+  # Customer managed policy (not inline), scoped to the one adapter function.
+  InvokeAdapterPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Invoke the SP-API adapter Lambda for this persona.
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: lambda:InvokeFunction
+            Resource: !Ref LambdaArn
+
+  Gateway:
+    Type: AWS::BedrockAgentCore::Gateway
+    Properties:
+      Name: !Sub "${Prefix}-${Persona}"
+      Description: !Sub "SP-API ${Persona} tools for Amazon Quick"
+      RoleArn: !GetAtt GatewayRole.Arn
+      ProtocolType: MCP
+      AuthorizerType: CUSTOM_JWT
+      AuthorizerConfiguration:
+        CustomJWTAuthorizer:
+          DiscoveryUrl: !Ref DiscoveryUrl
+          AllowedClients:
+            - !Ref AllowedClientId
+
+Outputs:
+  GatewayUrl:
+    Description: MCP endpoint URL to register in Amazon Quick.
+    Value: !GetAtt Gateway.GatewayUrl
+  GatewayIdentifier:
+    Description: Gateway id (used by deploy.sh to attach the target).
+    Value: !GetAtt Gateway.GatewayIdentifier
+  GatewayRoleArn:
+    Value: !GetAtt GatewayRole.Arn

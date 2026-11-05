@@ -1,0 +1,802 @@
+[
+  {
+    "name": "get_order",
+    "description": "Retrieve a single order by Amazon Order ID (Orders v0). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "orderId": {
+          "type": "string",
+          "description": "Amazon Order ID."
+        }
+      },
+      "required": [
+        "orderId"
+      ]
+    }
+  },
+  {
+    "name": "get_order_items",
+    "description": "List line items for an order (Orders v0). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "orderId": {
+          "type": "string",
+          "description": "Amazon Order ID."
+        }
+      },
+      "required": [
+        "orderId"
+      ]
+    }
+  },
+  {
+    "name": "list_orders",
+    "description": "List orders filtered by created/updated date, status, and fulfillment channel (Orders v0). Read-only. Requires createdAfter or lastUpdatedAfter.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "createdAfter": {
+          "type": "string",
+          "description": "ISO-8601 timestamp."
+        },
+        "createdBefore": {
+          "type": "string",
+          "description": "ISO-8601 timestamp."
+        },
+        "lastUpdatedAfter": {
+          "type": "string",
+          "description": "ISO-8601 timestamp."
+        },
+        "orderStatuses": {
+          "type": "array",
+          "description": "e.g. Unshipped, Shipped.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "fulfillmentChannels": {
+          "type": "array",
+          "description": "AFN (FBA) or MFN.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "maxResultsPerPage": {
+          "type": "integer",
+          "description": "1-100."
+        }
+      }
+    }
+  },
+  {
+    "name": "confirm_shipment",
+    "description": "WRITE: confirm shipment for an MFN order. Requires confirmation. Supply the SP-API shipmentConfirmation body.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "orderId": {
+          "type": "string",
+          "description": "Amazon Order ID."
+        },
+        "body": {
+          "type": "object",
+          "description": "SP-API ShipmentConfirmation payload (packageDetail, marketplaceId, etc.)."
+        }
+      },
+      "required": [
+        "orderId",
+        "body"
+      ]
+    }
+  },
+  {
+    "name": "search_catalog_items",
+    "description": "Search the Amazon catalog by keywords or identifiers (UPC/EAN/ASIN) (Catalog Items 2022-04-01). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "keywords": {
+          "type": "array",
+          "description": "Search keywords.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "identifiers": {
+          "type": "array",
+          "description": "Identifier values, e.g. UPCs or ASINs.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "identifiersType": {
+          "type": "string",
+          "description": "ASIN, UPC, EAN, GTIN, etc."
+        },
+        "includedData": {
+          "type": "array",
+          "description": "summaries, images, salesRanks, attributes.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "pageSize": {
+          "type": "integer",
+          "description": "1-20."
+        }
+      }
+    }
+  },
+  {
+    "name": "get_catalog_item",
+    "description": "Get catalog detail for an ASIN: attributes, images, sales ranks, dimensions (Catalog Items 2022-04-01). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "asin": {
+          "type": "string",
+          "description": "ASIN."
+        },
+        "includedData": {
+          "type": "array",
+          "description": "summaries, images, salesRanks, attributes, dimensions.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "asin"
+      ]
+    }
+  },
+  {
+    "name": "get_listings_item",
+    "description": "Get one of the seller's listings (Listings Items 2021-08-01). Read-only. sellerId defaults to the deployment's SELLER_ID.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sellerId": {
+          "type": "string",
+          "description": "Selling partner id (optional; injected from config)."
+        },
+        "sku": {
+          "type": "string",
+          "description": "Seller SKU."
+        },
+        "includedData": {
+          "type": "array",
+          "description": "summaries, attributes, issues, offers, fulfillmentAvailability.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "sku"
+      ]
+    }
+  },
+  {
+    "name": "search_listings_items",
+    "description": "Search/list the seller's listings (Listings Items 2021-08-01). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sellerId": {
+          "type": "string",
+          "description": "Selling partner id (optional; injected)."
+        },
+        "identifiers": {
+          "type": "array",
+          "description": "SKUs to filter by.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "pageSize": {
+          "type": "integer",
+          "description": "1-20."
+        },
+        "includedData": {
+          "type": "array",
+          "description": "summaries, attributes, issues.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "put_listings_item",
+    "description": "WRITE: create or replace a listing (Listings Items 2021-08-01). Requires confirmation. Supply the full SP-API listings body (productType, requirements, attributes).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sellerId": {
+          "type": "string",
+          "description": "Selling partner id (optional; injected)."
+        },
+        "sku": {
+          "type": "string",
+          "description": "Seller SKU."
+        },
+        "body": {
+          "type": "object",
+          "description": "SP-API listings item payload."
+        }
+      },
+      "required": [
+        "sku",
+        "body"
+      ]
+    }
+  },
+  {
+    "name": "delete_listings_item",
+    "description": "WRITE: delete a listing (Listings Items 2021-08-01). Requires confirmation.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sellerId": {
+          "type": "string",
+          "description": "Selling partner id (optional; injected)."
+        },
+        "sku": {
+          "type": "string",
+          "description": "Seller SKU."
+        }
+      },
+      "required": [
+        "sku"
+      ]
+    }
+  },
+  {
+    "name": "get_listings_restrictions",
+    "description": "Check whether the seller can list a given ASIN and any restrictions (Listings Restrictions 2021-08-01). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sellerId": {
+          "type": "string",
+          "description": "Selling partner id (optional; injected)."
+        },
+        "asin": {
+          "type": "string",
+          "description": "ASIN."
+        },
+        "conditionType": {
+          "type": "string",
+          "description": "e.g. new_new, used_good."
+        }
+      },
+      "required": [
+        "asin"
+      ]
+    }
+  },
+  {
+    "name": "search_product_type_definitions",
+    "description": "Find Amazon product types for listing (Product Type Definitions 2020-09-01). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "keywords": {
+          "type": "array",
+          "description": "Keywords.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "itemName": {
+          "type": "string",
+          "description": "Product title to infer type."
+        }
+      }
+    }
+  },
+  {
+    "name": "get_product_type_definition",
+    "description": "Get the listing schema/requirements for a product type (Product Type Definitions 2020-09-01). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "productType": {
+          "type": "string",
+          "description": "e.g. LUGGAGE, SHOES."
+        }
+      },
+      "required": [
+        "productType"
+      ]
+    }
+  },
+  {
+    "name": "get_competitive_pricing",
+    "description": "Competitive pricing for ASINs or SKUs (Product Pricing v0). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "asins": {
+          "type": "array",
+          "description": "ASINs.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "skus": {
+          "type": "array",
+          "description": "Seller SKUs.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "get_item_offers",
+    "description": "Current offers for an ASIN, including Buy Box (Product Pricing v0). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "asin": {
+          "type": "string",
+          "description": "ASIN."
+        },
+        "itemCondition": {
+          "type": "string",
+          "description": "New, Used, etc. Defaults New."
+        }
+      },
+      "required": [
+        "asin"
+      ]
+    }
+  },
+  {
+    "name": "get_listing_offers",
+    "description": "Competitive offers for one of the seller's SKUs, including Buy Box (Product Pricing v0). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sellerSku": {
+          "type": "string",
+          "description": "Seller SKU."
+        },
+        "itemCondition": {
+          "type": "string",
+          "description": "New, Used, etc. Default New."
+        }
+      },
+      "required": [
+        "sellerSku"
+      ]
+    }
+  },
+  {
+    "name": "patch_listing_price",
+    "description": "WRITE: set a new price for a SKU in the US marketplace (Listings Items 2021-08-01). Requires confirmation.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sku": {
+          "type": "string",
+          "description": "Seller SKU."
+        },
+        "price": {
+          "type": "number",
+          "description": "New price (tax-inclusive)."
+        },
+        "currency": {
+          "type": "string",
+          "description": "ISO code, default USD."
+        }
+      },
+      "required": [
+        "sku",
+        "price"
+      ]
+    }
+  },
+  {
+    "name": "get_my_fees_estimate",
+    "description": "Estimate referral + FBA fees for an ASIN at a given price (Product Fees v0). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "asin": {
+          "type": "string",
+          "description": "ASIN."
+        },
+        "price": {
+          "type": "number",
+          "description": "Listing price."
+        },
+        "currency": {
+          "type": "string",
+          "description": "ISO code, default USD."
+        },
+        "isAmazonFulfilled": {
+          "type": "boolean",
+          "description": "FBA? default true."
+        }
+      },
+      "required": [
+        "asin",
+        "price"
+      ]
+    }
+  },
+  {
+    "name": "create_fulfillment_order",
+    "description": "WRITE: create a Multi-Channel Fulfillment order (FBA Outbound 2020-07-01). Requires confirmation. Supply the SP-API createFulfillmentOrder body.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "object",
+          "description": "createFulfillmentOrder payload."
+        }
+      },
+      "required": [
+        "body"
+      ]
+    }
+  },
+  {
+    "name": "get_fulfillment_order",
+    "description": "Get an MCF order (FBA Outbound 2020-07-01). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sellerFulfillmentOrderId": {
+          "type": "string",
+          "description": "Your MCF order id."
+        }
+      },
+      "required": [
+        "sellerFulfillmentOrderId"
+      ]
+    }
+  },
+  {
+    "name": "list_all_fulfillment_orders",
+    "description": "List MCF orders (FBA Outbound 2020-07-01). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "queryStartDate": {
+          "type": "string",
+          "description": "ISO-8601 timestamp."
+        }
+      }
+    }
+  },
+  {
+    "name": "cancel_fulfillment_order",
+    "description": "WRITE: cancel an MCF order (FBA Outbound 2020-07-01). Requires confirmation.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sellerFulfillmentOrderId": {
+          "type": "string",
+          "description": "Your MCF order id."
+        }
+      },
+      "required": [
+        "sellerFulfillmentOrderId"
+      ]
+    }
+  },
+  {
+    "name": "get_fulfillment_preview",
+    "description": "Preview MCF options/costs for items + destination (FBA Outbound 2020-07-01). Read-only. Supply the SP-API preview body.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "object",
+          "description": "getFulfillmentPreview payload."
+        }
+      },
+      "required": [
+        "body"
+      ]
+    }
+  },
+  {
+    "name": "get_package_tracking_details",
+    "description": "Tracking detail for an MCF package (FBA Outbound 2020-07-01). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "packageNumber": {
+          "type": "integer",
+          "description": "Package number."
+        }
+      },
+      "required": [
+        "packageNumber"
+      ]
+    }
+  },
+  {
+    "name": "get_eligible_shipment_services",
+    "description": "List eligible carrier services + rates for an MFN shipment (Merchant Fulfillment v0). Read-only. Supply the SP-API body.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "object",
+          "description": "getEligibleShipmentServices payload."
+        }
+      },
+      "required": [
+        "body"
+      ]
+    }
+  },
+  {
+    "name": "create_shipment",
+    "description": "WRITE: buy an MFN shipping label (Merchant Fulfillment v0). Requires confirmation. Supply the SP-API body.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "object",
+          "description": "createShipment payload."
+        }
+      },
+      "required": [
+        "body"
+      ]
+    }
+  },
+  {
+    "name": "get_shipment",
+    "description": "Get an MFN shipment/label (Merchant Fulfillment v0). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "shipmentId": {
+          "type": "string",
+          "description": "Shipment id."
+        }
+      },
+      "required": [
+        "shipmentId"
+      ]
+    }
+  },
+  {
+    "name": "cancel_shipment",
+    "description": "WRITE: cancel an MFN shipment (Merchant Fulfillment v0). Requires confirmation.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "shipmentId": {
+          "type": "string",
+          "description": "Shipment id."
+        }
+      },
+      "required": [
+        "shipmentId"
+      ]
+    }
+  },
+  {
+    "name": "list_financial_events",
+    "description": "List financial events: fees, refunds, adjustments (Finances v0). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "postedAfter": {
+          "type": "string",
+          "description": "ISO-8601 timestamp."
+        },
+        "postedBefore": {
+          "type": "string",
+          "description": "ISO-8601 timestamp."
+        },
+        "maxResultsPerPage": {
+          "type": "integer",
+          "description": "1-100."
+        }
+      }
+    }
+  },
+  {
+    "name": "list_transactions",
+    "description": "List finance transactions (Finances 2024-06-19). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "postedAfter": {
+          "type": "string",
+          "description": "ISO-8601 timestamp. Required."
+        },
+        "postedBefore": {
+          "type": "string",
+          "description": "ISO-8601 timestamp."
+        },
+        "marketplaceId": {
+          "type": "string",
+          "description": "Defaults to US."
+        }
+      },
+      "required": [
+        "postedAfter"
+      ]
+    }
+  },
+  {
+    "name": "request_review",
+    "description": "WRITE: send the buyer a product-review + seller-feedback request for an order (Solicitations v1). Requires confirmation.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "orderId": {
+          "type": "string",
+          "description": "Amazon Order ID."
+        }
+      },
+      "required": [
+        "orderId"
+      ]
+    }
+  },
+  {
+    "name": "get_messaging_actions_for_order",
+    "description": "List the buyer-messaging actions allowed for an order (Messaging v1). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "orderId": {
+          "type": "string",
+          "description": "Amazon Order ID."
+        }
+      },
+      "required": [
+        "orderId"
+      ]
+    }
+  },
+  {
+    "name": "get_marketplace_participations",
+    "description": "List the marketplaces the seller participates in (Sellers v1). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "name": "get_order_metrics",
+    "description": "Aggregated sales volume & amount over a time interval (Sales v1). Read-only. Requires the Inventory and Order Tracking or Product Listing role.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "interval": {
+          "type": "string",
+          "description": "ISO range joined by '--', e.g. 2024-01-01T00:00:00-08:00--2024-01-31T00:00:00-08:00."
+        },
+        "granularity": {
+          "type": "string",
+          "description": "Hour, Day, Week, Month, Year, Total. Default Day."
+        },
+        "granularityTimeZone": {
+          "type": "string",
+          "description": "e.g. US/Pacific."
+        }
+      },
+      "required": [
+        "interval"
+      ]
+    }
+  },
+  {
+    "name": "get_inventory_summaries",
+    "description": "Current FBA inventory levels per SKU (FBA Inventory). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "details": {
+          "type": "boolean",
+          "description": "Include detailed quantities. Default true."
+        }
+      }
+    }
+  },
+  {
+    "name": "get_sales_and_traffic",
+    "description": "Data Kiosk sales & traffic time series: sales, units, sessions, page views, Buy Box %, unit-session %. Async; real data in production only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "startDate": {
+          "type": "string",
+          "description": "Date, YYYY-MM-DD."
+        },
+        "endDate": {
+          "type": "string",
+          "description": "Date, YYYY-MM-DD."
+        },
+        "aggregateBy": {
+          "type": "string",
+          "description": "Bucket size: DAY, WEEK, or MONTH."
+        }
+      },
+      "required": [
+        "startDate",
+        "endDate"
+      ]
+    }
+  },
+  {
+    "name": "get_data_kiosk_result",
+    "description": "Fetch a still-processing Data Kiosk query by queryId. Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "queryId": {
+          "type": "string",
+          "description": "Data Kiosk queryId."
+        }
+      },
+      "required": [
+        "queryId"
+      ]
+    }
+  },
+  {
+    "name": "run_report",
+    "description": "Run any SP-API report (Reports 2021-06-30) and return a text preview. Async. e.g. GET_FBA_FULFILLMENT_CUSTOMER_RETURNS_DATA, GET_LEDGER_SUMMARY_VIEW_DATA, GET_V2_SETTLEMENT_REPORT_DATA_FLAT_FILE.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "reportType": {
+          "type": "string",
+          "description": "SP-API report type."
+        },
+        "dataStartTime": {
+          "type": "string",
+          "description": "ISO-8601 timestamp."
+        },
+        "dataEndTime": {
+          "type": "string",
+          "description": "ISO-8601 timestamp."
+        },
+        "marketplaceIds": {
+          "type": "array",
+          "description": "Defaults to US.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "reportType"
+      ]
+    }
+  },
+  {
+    "name": "get_report_result",
+    "description": "Fetch a still-processing report by reportId (Reports 2021-06-30). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "reportId": {
+          "type": "string",
+          "description": "Report id."
+        }
+      },
+      "required": [
+        "reportId"
+      ]
+    }
+  }
+]

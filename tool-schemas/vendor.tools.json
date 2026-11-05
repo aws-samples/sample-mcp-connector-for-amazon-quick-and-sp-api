@@ -1,0 +1,449 @@
+[
+  {
+    "name": "get_purchase_orders",
+    "description": "List vendor (1P) purchase orders by created date (Vendor Orders v1). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "createdAfter": {
+          "type": "string",
+          "description": "ISO-8601 timestamp."
+        },
+        "createdBefore": {
+          "type": "string",
+          "description": "ISO-8601 timestamp."
+        },
+        "limit": {
+          "type": "integer",
+          "description": "1-100."
+        }
+      }
+    }
+  },
+  {
+    "name": "get_purchase_order",
+    "description": "Get a vendor (1P) purchase order by PO number (Vendor Orders v1). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "purchaseOrderNumber": {
+          "type": "string",
+          "description": "PO number."
+        }
+      },
+      "required": [
+        "purchaseOrderNumber"
+      ]
+    }
+  },
+  {
+    "name": "get_purchase_orders_status",
+    "description": "Status of vendor (1P) purchase orders (Vendor Orders v1). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "createdAfter": {
+          "type": "string",
+          "description": "ISO-8601 timestamp."
+        },
+        "createdBefore": {
+          "type": "string",
+          "description": "ISO-8601 timestamp."
+        },
+        "limit": {
+          "type": "integer",
+          "description": "1-100."
+        }
+      }
+    }
+  },
+  {
+    "name": "submit_acknowledgement",
+    "description": "WRITE: acknowledge vendor (1P) purchase orders (Vendor Orders v1). Requires confirmation.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "acknowledgements": {
+          "type": "array",
+          "description": "OrderAcknowledgement objects.",
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "required": [
+        "acknowledgements"
+      ]
+    }
+  },
+  {
+    "name": "get_transaction_status",
+    "description": "Check the status of a submitted vendor transaction (acknowledgement/shipment/invoice) (Vendor Transaction Status v1). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "description": "Transaction id returned by a submit call."
+        }
+      },
+      "required": [
+        "transactionId"
+      ]
+    }
+  },
+  {
+    "name": "submit_shipment_confirmations",
+    "description": "WRITE: submit vendor shipment confirmations / ASN (Vendor Shipments v1). Requires confirmation. Supply the SP-API body.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "object",
+          "description": "submitShipmentConfirmations payload."
+        }
+      },
+      "required": [
+        "body"
+      ]
+    }
+  },
+  {
+    "name": "get_shipment_details",
+    "description": "List vendor shipment details (Vendor Shipments v1). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "createdAfter": {
+          "type": "string",
+          "description": "ISO-8601 timestamp."
+        },
+        "createdBefore": {
+          "type": "string",
+          "description": "ISO-8601 timestamp."
+        },
+        "limit": {
+          "type": "integer",
+          "description": "1-100."
+        }
+      }
+    }
+  },
+  {
+    "name": "submit_invoices",
+    "description": "WRITE: submit vendor invoices (Vendor Invoices v1). Requires confirmation. Supply the SP-API body.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "object",
+          "description": "submitInvoices payload."
+        }
+      },
+      "required": [
+        "body"
+      ]
+    }
+  },
+  {
+    "name": "get_vendor_sales",
+    "description": "Vendor (1P) sales over time from Data Kiosk: net ordered GMS, ordered/shipped units & revenue, ASP. Async; production only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "startDate": {
+          "type": "string",
+          "description": "Date, YYYY-MM-DD."
+        },
+        "endDate": {
+          "type": "string",
+          "description": "Date, YYYY-MM-DD."
+        },
+        "aggregateBy": {
+          "type": "string",
+          "description": "Bucket size: DAY, WEEK, or MONTH."
+        }
+      },
+      "required": [
+        "startDate",
+        "endDate"
+      ]
+    }
+  },
+  {
+    "name": "get_vendor_inventory",
+    "description": "Vendor (1P) inventory health from Data Kiosk: sellable/unsellable on-hand, sell-through, open PO qty, fill/confirmation rates. Async; production only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "startDate": {
+          "type": "string",
+          "description": "Date, YYYY-MM-DD."
+        },
+        "endDate": {
+          "type": "string",
+          "description": "Date, YYYY-MM-DD."
+        },
+        "aggregateBy": {
+          "type": "string",
+          "description": "Bucket size: DAY, WEEK, or MONTH."
+        }
+      },
+      "required": [
+        "startDate",
+        "endDate"
+      ]
+    }
+  },
+  {
+    "name": "get_vendor_traffic",
+    "description": "Vendor (1P) glance views over time from Data Kiosk. Async; production only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "startDate": {
+          "type": "string",
+          "description": "Date, YYYY-MM-DD."
+        },
+        "endDate": {
+          "type": "string",
+          "description": "Date, YYYY-MM-DD."
+        },
+        "aggregateBy": {
+          "type": "string",
+          "description": "Bucket size: DAY, WEEK, or MONTH."
+        }
+      },
+      "required": [
+        "startDate",
+        "endDate"
+      ]
+    }
+  },
+  {
+    "name": "get_vendor_forecasting",
+    "description": "Vendor (1P) demand forecast (mean, p70/p80/p90) from Data Kiosk. Async; production only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "startDate": {
+          "type": "string",
+          "description": "Date, YYYY-MM-DD."
+        },
+        "endDate": {
+          "type": "string",
+          "description": "Date, YYYY-MM-DD."
+        },
+        "aggregateBy": {
+          "type": "string",
+          "description": "Bucket size: DAY, WEEK, or MONTH."
+        }
+      },
+      "required": [
+        "startDate",
+        "endDate"
+      ]
+    }
+  },
+  {
+    "name": "get_data_kiosk_result",
+    "description": "Fetch a still-processing Data Kiosk query by queryId. Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "queryId": {
+          "type": "string",
+          "description": "Data Kiosk queryId."
+        }
+      },
+      "required": [
+        "queryId"
+      ]
+    }
+  },
+  {
+    "name": "run_report",
+    "description": "Run any SP-API vendor report (Reports 2021-06-30) and return a text preview. Async. e.g. GET_VENDOR_SALES_REPORT, GET_VENDOR_INVENTORY_REPORT, GET_VENDOR_TRAFFIC_REPORT, GET_VENDOR_FORECASTING_REPORT.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "reportType": {
+          "type": "string",
+          "description": "SP-API report type."
+        },
+        "dataStartTime": {
+          "type": "string",
+          "description": "ISO-8601 timestamp."
+        },
+        "dataEndTime": {
+          "type": "string",
+          "description": "ISO-8601 timestamp."
+        },
+        "marketplaceIds": {
+          "type": "array",
+          "description": "Defaults to US.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "reportType"
+      ]
+    }
+  },
+  {
+    "name": "get_report_result",
+    "description": "Fetch a still-processing report by reportId (Reports 2021-06-30). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "reportId": {
+          "type": "string",
+          "description": "Report id."
+        }
+      },
+      "required": [
+        "reportId"
+      ]
+    }
+  },
+  {
+    "name": "get_df_orders",
+    "description": "DF only: list Direct Fulfillment purchase orders (DF Orders 2021-12-28). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "createdAfter": {
+          "type": "string",
+          "description": "ISO-8601 timestamp."
+        },
+        "createdBefore": {
+          "type": "string",
+          "description": "ISO-8601 timestamp."
+        },
+        "limit": {
+          "type": "integer",
+          "description": "1-100."
+        }
+      }
+    }
+  },
+  {
+    "name": "get_df_order",
+    "description": "DF only: get a Direct Fulfillment purchase order (DF Orders 2021-12-28). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "purchaseOrderNumber": {
+          "type": "string",
+          "description": "PO number."
+        }
+      },
+      "required": [
+        "purchaseOrderNumber"
+      ]
+    }
+  },
+  {
+    "name": "submit_df_acknowledgement",
+    "description": "DF only WRITE: acknowledge DF purchase orders (DF Orders 2021-12-28). Requires confirmation. Supply the SP-API body.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "object",
+          "description": "submitAcknowledgement payload."
+        }
+      },
+      "required": [
+        "body"
+      ]
+    }
+  },
+  {
+    "name": "submit_df_shipment_confirmations",
+    "description": "DF only WRITE: confirm DF shipments (DF Shipping 2021-12-28). Requires confirmation. Supply the SP-API body.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "object",
+          "description": "submitShipmentConfirmations payload."
+        }
+      },
+      "required": [
+        "body"
+      ]
+    }
+  },
+  {
+    "name": "submit_df_shipment_status_updates",
+    "description": "DF only WRITE: update DF shipment status (DF Shipping 2021-12-28). Requires confirmation. Supply the SP-API body.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "object",
+          "description": "submitShipmentStatusUpdates payload."
+        }
+      },
+      "required": [
+        "body"
+      ]
+    }
+  },
+  {
+    "name": "submit_df_inventory_update",
+    "description": "DF only WRITE: update DF warehouse inventory (DF Inventory v1). Requires confirmation. Supply the SP-API body.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "warehouseId": {
+          "type": "string",
+          "description": "Warehouse id."
+        },
+        "body": {
+          "type": "object",
+          "description": "inventory update payload."
+        }
+      },
+      "required": [
+        "warehouseId",
+        "body"
+      ]
+    }
+  },
+  {
+    "name": "submit_df_invoices",
+    "description": "DF only WRITE: submit DF invoices (DF Payments v1). Requires confirmation. Supply the SP-API body.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "object",
+          "description": "submitInvoices payload."
+        }
+      },
+      "required": [
+        "body"
+      ]
+    }
+  },
+  {
+    "name": "get_df_transaction_status",
+    "description": "DF only: check a DF transaction status (DF Transactions 2021-12-28). Read-only.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "transactionId": {
+          "type": "string",
+          "description": "Transaction id."
+        }
+      },
+      "required": [
+        "transactionId"
+      ]
+    }
+  }
+]
